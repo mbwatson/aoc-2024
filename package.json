@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "init": "node init",
-    "solve": "node main"
+    "solve": "node solve"
   },
   "keywords": [],
   "author": "",
