@@ -1,16 +1,6 @@
 // Day 01 -- Historian Hysteria
+import 'util/array.mjs';
 import { unzip, zip } from 'util/zip.mjs';
-
-Array.prototype.count = function countOccurrences(x) {
-  return this.reduce((acc, y) => {
-    if (y in acc) {
-      acc[y] += 1;
-      return acc;
-    }
-    acc[y] = 1;
-    return acc;
-  }, {})[x] ?? 0;
-};
 
 let pairs, left, right;
 
