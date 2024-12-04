@@ -48,16 +48,6 @@ export const part1 = function(input) {
   }, 0);
 };
 
-// 90-deg rotation
-// [1, 0, 1],        [0, 0, 1],
-// [0, 1, 1],  --->  [0, 1, 0],
-// [0, 0, 1],        [1, 1, 1],
-function rotate(matrix) {
-  return matrix[0].map((_, colIndex) => 
-    matrix.map(row => row[colIndex]).reverse()
-  );
-}
-
 export const part2 = function(input) {
   const rows = input.map(r => r.split(''));
 
@@ -69,11 +59,10 @@ export const part2 = function(input) {
     ];
   }
 
-  // M.S
-  // .A.
-  // M.S
-  // this is that ^ pattern stringified:
-  const xMasPattern = new RegExp(/^M.S.A.M.S$/);
+  // M.S    <- that pattern stringified
+  // .A.       and its rotations,
+  // M.S       joined into regex patterns:
+  const xMasPattern = new RegExp(/^(M.S.A.M.S|S.M.A.S.M|S.S.A.M.M|M.M.A.S.S)$/);
 
   // visit each cell of the 2d matrix.
   // when an 'A' is found, read around that cell.
@@ -83,12 +72,9 @@ export const part2 = function(input) {
   for (let row = 1; row < inputRows - 1; row += 1) {
     for (let col = 1; col < inputCols - 1; col += 1) {
       let window = readAround({ row, col });
-      for (let i = 0; i < 4; i += 1) {
-        const windowStringified = window.map(r => r.join('')).join('');
-        const matches = windowStringified.match(xMasPattern);
-        if (matches) { count += 1 };
-        window = rotate(window);
-      }
+      const windowStringified = window.map(r => r.join('')).join('');
+      const matches = windowStringified.match(xMasPattern);
+      if (matches) { count += 1 };
     }
   }
   return count;
