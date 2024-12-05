@@ -1,4 +1,4 @@
-const mainJs = `// Day {{DAY}}
+const mainJs = `// {{DAY}}
 
 export const part1 = function(input) {
   return null;

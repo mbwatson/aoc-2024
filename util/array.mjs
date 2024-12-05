@@ -9,3 +9,7 @@ Array.prototype.count = function countOccurrences(x) {
   }, {})[x] ?? 0;
 };
 
+Array.prototype.split = function split(index) {
+  const clone = [...this];
+  return [clone.splice(0, index), clone];
+};

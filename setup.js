@@ -28,7 +28,7 @@ export const setupWorkspace = function(dirName, title, write, verbose) {
   write && fs.mkdirSync(dirPath);
 
   const mainJs = templates.mainJs
-    .replace(/{{DAY}}/g, `${ dirName } -- ${ title }`);
+    .replace(/{{DAY}}/g, `--- Day ${ dirName }: ${ title } ---`);
 
   contentPreview(`${ dirPath }/main.js`, mainJs, verbose);
   contentPreview(`${ dirPath }/test-input.txt`, templates.testInput, verbose);
