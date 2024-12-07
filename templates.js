@@ -1,4 +1,4 @@
-const mainJs = `// {{DAY}}
+const mainJs = `/* {{TITLE}} */
 
 export const part1 = function(input) {
   return null;
@@ -9,12 +9,12 @@ export const part2 = function(input) {
 };
 `;
 
-const testInput = `test\ninput\n`;
+const testInput = `. . t e s t . . .\n. . i n p u t . .\n`;
 
-const realInput = `real\ninput\n`;
+const realInput = `. . r e a l . . .\n. . i n p u t . .\n`;
 
 export default {
   mainJs,
   realInput,
   testInput,
-}
+};

@@ -1,6 +1,6 @@
 import fs from 'fs'
 
-export const readFileLines = (path, delimiter = '\n') => {
+export const readInputFile = (path, delimiter = '\n') => {
   let lines = [];
   try {
     const input = fs.readFileSync(path, 'utf8');

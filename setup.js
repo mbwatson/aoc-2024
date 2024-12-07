@@ -28,7 +28,7 @@ export const setupWorkspace = function(dirName, title, write, verbose) {
   write && fs.mkdirSync(dirPath);
 
   const mainJs = templates.mainJs
-    .replace(/{{DAY}}/g, `--- Day ${ dirName }: ${ title } ---`);
+    .replace(/{{TITLE}}/g, `--- Day ${ dirName }: ${ title } ---`);
 
   contentPreview(`${ dirPath }/main.js`, mainJs, verbose);
   contentPreview(`${ dirPath }/test-input.txt`, templates.testInput, verbose);
@@ -46,4 +46,3 @@ export const setupWorkspace = function(dirName, title, write, verbose) {
   writeFile(REAL_INPUT_FILENAME, templates.realInput);
   console.log('\n * 1 dir, 3 files written to disk *');
 }
-

@@ -1,4 +1,5 @@
-// Day 05 -- Print Queue
+/* Day 05 -- Print Queue */
+
 import 'util/array.mjs';
 
 function decodeOrder(arr) {
@@ -25,14 +26,14 @@ export const part1 = function(input) {
 
   return updates
     .filter(update => isValid(order, update))
-    .map(arr => arr[(arr.length - 1) / 2])
-    .reduce((sum, n) => sum + n, 0);
+    .reduce((sum, update) => sum + update[(update.length - 1) / 2], 0);
 };
 
 export const part2 = function(input) {
   return updates
     .filter(update => !isValid(order, update))
-    .map(update => update.sort((a, b) => order[a].includes(b) ? -1 : 1))
-    .map(arr => arr[(arr.length - 1) / 2])
-    .reduce((sum, n) => sum + n, 0);
+    .reduce((sum, update) => {
+      const validUpdate = update.sort((a, b) => order[a] && order[a].includes(b) ? -1 : 1)
+      return sum + validUpdate[(update.length - 1) / 2]
+    }, 0);
 };
