@@ -1,4 +1,6 @@
-const mainJs = `/* {{TITLE}} */
+const mainJs = `/*
+  {{TITLE}}
+*/
 
 export const part1 = function(input) {
   return null;
