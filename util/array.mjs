@@ -27,3 +27,27 @@ Array.prototype.allPairs = function allPairs() {
 Array.prototype.unique = function uniqueValues() {
   return [...new Set([...this])];
 };
+
+Array.prototype.dotProduct = function (otherArray) {
+  if (!Array.isArray(otherArray)) {
+    throw new TypeError('Argument must be an array');
+  }
+  if (this.length !== otherArray.length) {
+    throw new Error('Arrays must have the same length');
+  }
+  return this.reduce((sum, val, i) => sum + val * otherArray[i], 0);
+};
+
+Array.prototype.swap = function(index1, index2) {
+  if (index1 < 0 || index2 < 0 || index1 >= this.length || index2 >= this.length) {
+    throw new Error("Invalid indices");
+  }
+  [this[index1], this[index2]] = [this[index2], this[index1]];
+};
+
+Array.prototype.upTo = function(n) {
+  if (!parseInt(n) || n < 0) {
+    throw new TypeError('Argument must be a non-negative integer');
+  }
+  return [...Array(n).keys()];
+};
