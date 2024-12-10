@@ -2,7 +2,7 @@
   --- Day 10: Hoof It ---
 
   part1: 18.348ms
-  part2: 1.996ms
+  part2: 1.263ms
   Solutions: { part1: 644, part2: 1366 }
 
 */
@@ -20,7 +20,8 @@ function locateTrailheads(map) {
   return locations;
 }
 
-function walkTrails(map, trailheads) {
+function walkTrails(map) {
+  const trailheads = locateTrailheads(map);
   if (!trailheads.length) return [];
 
   const rows = map.length;
@@ -65,20 +66,19 @@ function walkTrails(map, trailheads) {
 //   process.stdout.write(` -- score: ${trail.length}\n`);
 // };
 
-let map, trailheads, trails;
+let map, trails;
 
 export const part1 = function(input) {
   map = input.map(r => r.split('').map(Number));
-  trailheads = locateTrailheads(map);
-  trails = walkTrails(map, trailheads);
+  trails = walkTrails(map).filter(t => t.length === 10);
   const peakCounts = trails
-    .filter(t => t.length === 10)
     .reduce((acc, trail) => {
       // logTrail(trail);
-      if (hash(...trail[0]) in acc) {
-        acc[hash(...trail[0])].add(hash(...trail[9]));
+      const hashedLocation = hash(...trail[0]);
+      if (hashedLocation in acc) {
+        acc[hashedLocation].add(hash(...trail[9]));
       } else {
-        acc[hash(...trail[0])] = new Set([hash(...trail[9])]);
+        acc[hashedLocation] = new Set([hash(...trail[9])]);
       }
       return acc;
     }, { });
@@ -86,15 +86,15 @@ export const part1 = function(input) {
 };
 
 export const part2 = function(input) {
-  const counts = trails
-    .filter(t => t.length === 10)
+  const pathCounts = trails
     .reduce((acc, trail) => {
-      if (hash(...trail[0]) in acc) {
-        acc[hash(...trail[0])] += 1;
+      const hashedLocation = hash(...trail[0]);
+      if (hashedLocation in acc) {
+        acc[hashedLocation] += 1;
       } else {
-        acc[hash(...trail[0])] = 1;
+        acc[hashedLocation] = 1;
       }
       return acc;
     }, { });
-  return Object.values(counts).reduce((sum, count) => sum + count, 0);
+  return Object.values(pathCounts).reduce((sum, count) => sum + count, 0);
 };
