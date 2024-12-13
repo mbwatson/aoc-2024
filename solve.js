@@ -31,11 +31,11 @@ const solve = async function(dir, test = false) {
     // run solvers on appropriate input
     // data, and time their execution.
     console.time('part1');
-    const solution1 = part1(input);
+    const solution1 = await part1(input);
     console.timeEnd('part1');
 
     console.time('part2');
-    const solution2 = part2(input);
+    const solution2 = await part2(input);
     console.timeEnd('part2');
 
     // return solutions object
