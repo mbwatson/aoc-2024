@@ -2,9 +2,21 @@
   --- Day 15: Warehouse Woes ---
 */
 
-function parse(lines) {
+function widen(map) {
+  return [...map].map((line, y) => {
+    for (let x = 0; x < line.length; x += 1) {
+      return line.replace(/O/g, '[]')
+        .replace(/#/g, '##')
+        .replace(/@/g, '@@')
+        .replace(/\./g, '..')
+        .replace(/@@/g, '@.');
+    }
+  });
+}
+
+function parse(lines, doubleWide = false) {
   const sep = lines.indexOf('');
-  const copy = [...lines];
+  const copy = doubleWide ? widen([...lines]) : [...lines];
   console.log(lines, [...copy.slice(1).flat()][0].split(''));
   return {
     map: copy.splice(0, sep),
@@ -109,5 +121,8 @@ export const part1 = function(input) {
 };
 
 export const part2 = function(input) {
+  const { map, moves } = parse(input, true);
+  console.log(map);
+  console.log(moves);
   return null;
 };
