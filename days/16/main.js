@@ -2,11 +2,16 @@
   --- Day 16: Reindeer Maze ---
 */
 
+function hash(i, j) { return `${ i },${ j }`; }
+function unhash(str) { return str.split(',').map(Number); }
+
 function parse(lines) {
   const height = lines.length;
   const width = lines[0].length;
+  const hashes = [];
   return lines.reduce((acc, line, y) => {
     for (let x = 0; x < width; x += 1) {
+      hashes.push(hash(x, y));
       if (line[x] in acc) {
         acc[line[x]].push({ x, y });
       } else {
@@ -19,9 +24,9 @@ function parse(lines) {
     width,
     height,
     map: lines,
+    hashes,
   });
 };
-
 
 function walkMaze(maze) {
   const dirs = [
@@ -30,44 +35,56 @@ function walkMaze(maze) {
     { x: 0, y: -1 },
     { x: -1, y: 0 },
   ];
-  let pointer = maze.S;
-
   const paths = [];
-  const solved = false;
 
-  function step({ x, y }, path) {
-    if (solved) return;
+  function step({ x, y }, path = []) {
+    path.push(hash(x, y));
 
-    path.push({ x, y });
-    let canStep = false;
-
-    for (let d of dirs) {
-      const next = { y: y + d.y, x: x + d.x };
-      if (maze.map[y][x] === '.') {
-        canStep = true;
-        step(next.y, next.x, path);
-      }
-      if (maze.map[y][x] === '#') { canStep = false; }
-      if (maze.map[y][x] === 'E') {
-        solved = true;
-      }
+    function validStep({ x, y }) {
+      return (maze.map[y][x] === '.' || maze.map[y][x] === 'E') 
+        && !path.includes(hash(x, y))
     }
 
-    if (!canStep) { paths.push([...path]); }
-    
-    path.pop();
+    if (maze.map[y][x] === 'E') {
+      paths.push([...path]);
+      return;
+    }
+
+    for (let d of dirs) {
+      const next = { x: x + d.x, y: y + d.y };
+      if (validStep(next)) {
+        step(next, path);
+      } else if (maze.map[y][x] === '#') {
+        paths.push([...path]);
+        path.pop();
+      }
+    }
   }
 
   const start = maze.S[0];
-  step(start, []);
+  step(start);
 
-  return paths;
+  return paths[0];
 }
+
 export const part1 = function(input) {
   const maze = parse(input);
-  console.log(maze);
-  walkMaze(maze);
-  return null;
+  const path = walkMaze(maze);
+  let turnCount = 0;
+  let lastDir = null;
+  console.log(path);
+  console.log(new Set([...path]));
+  for (let i = 0; i < path.length - 2; i += 1) {
+    const [x, y] = unhash(path[i]);
+    const thisDir = hash(x - unhash(path[i-1])[0], y - unhash(path[i-1])[1]);
+    console.log(path[i], {thisDir, lastDir})
+    if (lastDir && thisDir !== lastDir) {
+      turnCount += 1;
+    }
+    lastDir = hash(x, y);
+  }
+  console.log({ l: path.length, turnCount })
+  return path.length + 1000 * turnCount;
 };
 
 export const part2 = function(input) {
