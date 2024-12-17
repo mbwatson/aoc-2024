@@ -37,40 +37,59 @@ function cost(path) {
 }
 
 function findMinPath(maze) {
-  let minPath = null;
-  let minCost = Infinity;
-
-  let maxL = 0;
-  function step({ x, y }, path = [], visited = new Set()) {
-    path.push({ x, y });
-    const hsh = hash(x, y);
-    visited.add(hsh);
-    maxL = Math.max(maxL, path.length);
-    console.log(' '.repeat(path.length), path.length, maxL);
-    const valid = ({ x, y }) => 
-        (0 <= x && x < maze.width) && (0 <= y && y < maze.height) // on map
-        && (maze.map[y][x] === '.' || maze.map[y][x] === 'E')     // valid char
-        && !visited.has(hash(x, y));                              // unvisited
-    // at end?
-    if (maze.map[y][x] === 'E') {
-      const pathCost = cost(path);
-      if (pathCost < minCost) {
-        minCost = pathCost;
-        minPath = [...path];
-      }
-    }
-    // look around, take steps as able
-    for (const dir of dirs) {
-      const next = { x: x + dir.x, y: y + dir.y };
-      if (valid(next)) { step(next, path, visited); }
-    }
-    path.pop();
-    visited.delete(hsh);
-  }
   const start = maze.S?.[0];
   if (!start) throw new Error('maze does not have a start "S".');
-  step(start);
-  return minPath;
+  
+  const dirs = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
+  const { width, height, map } = maze;
+
+  const queue = [{ ...start, cost: 0, turns: 0 }];
+  const visited = Array.from({ length: height }, () => Array(width).fill(false));
+
+  function taxicab(x, y) {
+    const end = maze.E[0];
+    return Math.abs(end.x - x) + Math.abs(end.y - y);
+  }
+
+  function isValid({ x, y }) {
+    return (
+      0 <= x && x < width && 0 <= y && y < height
+      && (map[y][x] === '.' || map[y][x] === 'E')
+      && !visited[y][x]
+    );
+  }
+
+  let minCost = Infinity;
+
+  while (queue.length) {
+    queue.sort((a, b) => (a.cost + taxicab(a.x, a.y)) - (b.cost + taxicab(b.x, b.y)));
+    const { x, y, cost, dir, path = [] } = queue.shift();
+
+    const lastDir = path.length > 1 ? path[path.length - 2].dir : false;
+    const turning = lastDir && dir.x === lastDir.x && dir.y === lastDir.y;
+
+    if (map[y][x] === 'E') {
+      minCost = Math.min(minCost, turning ? cost + 1000 : cost);
+      continue;
+    }
+
+    visited[y][x] = true;
+
+    for (const d of dirs) {
+      const next = { x: x + d.x, y: y + d.y };
+      if (isValid(next)) {
+        queue.push({
+          ...next,
+          cost: cost + 1 + 1000 * turning,
+          dir: d,
+          turn: turning,
+          path: [...path, next],
+        });
+      }
+    }
+  }
+
+  return minCost;
 }
 
 export const part1 = function(input) {
