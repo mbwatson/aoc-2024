@@ -2,6 +2,8 @@
   --- Day 17: Chronospatial Computer ---
 */
 
+function hash(...args) { return args.join(','); }
+
 function parse(lines) {
   const sep = lines.indexOf('');
   const copy = [...lines];
@@ -21,21 +23,21 @@ function parse(lines) {
 
 function run(registers, program) {
   const output = [];
-  let pointer = 0;
+  let pointer = 0n;
   const combo = n => [0n, 1n, 2n, 3n, registers.A, registers.B, registers.C][n];
   const instructions = [
-    n => { registers.A = Math.trunc(registers.A >> combo(n)); pointer += 2;  }, /* 0, adv */
-    n => { registers.B = BigInt(n) ^ registers.B;             pointer += 2;  }, /* 1, bxl */
-    n => { registers.B = combo(n) & 7n;                       pointer += 2;  }, /* 2, bst */
-    n => { pointer = registers.A > 0n ? n : pointer + 2;                      }, /* 3, jnz */
-   () => { registers.B = registers.B ^ registers.C;          pointer += 2;  }, /* 4, bxc */
-    n => { output.push(combo(n) & 7n);                        pointer += 2;  }, /* 5, out */
-    n => { registers.B = Math.trunc(registers.A >> combo(n)); pointer += 2;  }, /* 6, bdv */
-    n => { registers.C = Math.trunc(registers.A >> combo(n)); pointer += 2;  }, /* 7, cdv */
+    n => { registers.A = registers.A / 2n**combo(n);      pointer += 2n;  }, /* 0, adv */
+    n => { registers.B = n ^ registers.B;                 pointer += 2n;  }, /* 1, bxl */
+    n => { registers.B = combo(n) & 7n;                   pointer += 2n;  }, /* 2, bst */
+    n => { pointer = registers.A > 0n ? n : pointer + 2n;                 }, /* 3, jnz */
+   () => { registers.B = registers.B ^ registers.C;       pointer += 2n;  }, /* 4, bxc */
+    n => { output.push(combo(n) & 7n);                    pointer += 2n;  }, /* 5, out */
+    n => { registers.B = registers.A / 2n**combo(n);      pointer += 2n;  }, /* 6, bdv */
+    n => { registers.C = registers.A / 2n**combo(n);      pointer += 2n;  }, /* 7, cdv */
   ];
 
   while (pointer < program.length) {
-    instructions[program[pointer]](program[pointer + 1]);
+    instructions[program[pointer]](program[pointer + 1n]);
   }
 
   return output;
@@ -53,8 +55,8 @@ function findMinimumA(program, a = 0n, depth = 1) {
     console.log('-', { nextA, target, out });
 
     // if output matches our target so far, dig deeper
-    if (JSON.stringify(out) === JSON.stringify(target)) {
-      const result = findMinimumA(program, nextA, depth + 1n);
+    if (hash(out) === hash(target)) {
+      const result = findMinimumA(program, nextA, depth + 1);
 
       // return result if/when valid value is found
       if (result) { return result; }
