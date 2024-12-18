@@ -15,7 +15,7 @@ const args = arg({
   '-t': '--test',
 });
 
-let TEST_MODE = false;
+export let TEST_MODE = false;
 if (args['--test']) { TEST_MODE = true; }
 const DAY = args['--day'] > 0 ? args['--day'] : null;
 
