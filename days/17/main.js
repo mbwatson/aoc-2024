@@ -4,49 +4,77 @@
 
 function parse(lines) {
   const sep = lines.indexOf('');
+  const copy = [...lines];
   return {
-    registers: lines.splice(0, sep).reduce((acc, line) => {
+    registers: copy.splice(0, sep).reduce((acc, line) => {
       const matches = line.match(/^Register ([ABC]): (\d+)$/);
-      if (matches) { acc[matches[1]] = Number(matches[2]); }
+      if (matches) { acc[matches[1]] = BigInt(matches[2]); }
       return acc;
     }, { }),
-    program: lines.slice(1).reduce((acc, line) => {
+    program: copy.slice(1).reduce((acc, line) => {
       const matches = line.match(/^Program: (([0-7],?)+)$/);
-      if (matches) { acc.push(matches[1].split(',').map(Number)); }
+      if (matches) { acc.push(matches[1].split(',').map(BigInt)); }
       return acc;
     }, [])[0],
   };
 };
 
-export const part1 = function(input) {
+function run(registers, program) {
   const output = [];
-  const { registers, program } = parse(input);
-
   let pointer = 0;
-  const combo = n => [0, 1, 2, 3, registers.A, registers.B, registers.C][n];
-
+  const combo = n => [0n, 1n, 2n, 3n, registers.A, registers.B, registers.C][n];
   const instructions = [
-    /* 0, adv */  n => { registers.A = Math.trunc(registers.A / 2**combo(n)); pointer += 2; },
-    /* 1, bxl */  n => { registers.B = Number(n) ^ registers.B;               pointer += 2; },
-    /* 2, bst */  n => { registers.B = combo(n) & 7;                          pointer += 2; },
-    /* 3, jnz */  n => { pointer = registers.A > 0 ? n : pointer + 2;                       },
-    /* 4, bxc */ () => { registers.B = registers.B ^ registers.C;            pointer += 2;  },
-    /* 5, out */  n => { output.push(combo(n) & 7);                           pointer += 2; },
-    /* 6, bdv */  n => { registers.B = Math.trunc(registers.A / 2**combo(n)); pointer += 2; },
-    /* 7, cdv */  n => { registers.C = Math.trunc(registers.A / 2**combo(n)); pointer += 2; },
+    n => { registers.A = Math.trunc(registers.A >> combo(n)); pointer += 2;  }, /* 0, adv */
+    n => { registers.B = BigInt(n) ^ registers.B;             pointer += 2;  }, /* 1, bxl */
+    n => { registers.B = combo(n) & 7n;                       pointer += 2;  }, /* 2, bst */
+    n => { pointer = registers.A > 0n ? n : pointer + 2;                      }, /* 3, jnz */
+   () => { registers.B = registers.B ^ registers.C;          pointer += 2;  }, /* 4, bxc */
+    n => { output.push(combo(n) & 7n);                        pointer += 2;  }, /* 5, out */
+    n => { registers.B = Math.trunc(registers.A >> combo(n)); pointer += 2;  }, /* 6, bdv */
+    n => { registers.C = Math.trunc(registers.A >> combo(n)); pointer += 2;  }, /* 7, cdv */
   ];
-  
-  console.log({ registers, program });
 
-  let count = 0, failsafe = 10_000;
-  while (pointer < program.length && count < failsafe) {
-    console.log(count, output.join(',') )
-    instructions[program[pointer]](program[pointer + 1])
-    count += 1;
+  while (pointer < program.length) {
+    instructions[program[pointer]](program[pointer + 1]);
   }
-  return output.join(',');
+
+  return output;
+}
+
+function findMinimumA(program, a = 0n, depth = 1) {
+  if (depth > program.length) { return a; }
+
+  // explore candidate lowest three bits
+  for (let i = 0n; i < 8n; i += 1n) {
+    console.log({ i, depth, a });
+    const nextA = (a << 3n) | i;
+    const out = run({ A: nextA, B: 0n, C: 0n }, program);
+    const target = program.slice(-depth);
+    console.log('-', { nextA, target, out });
+
+    // if output matches our target so far, dig deeper
+    if (JSON.stringify(out) === JSON.stringify(target)) {
+      const result = findMinimumA(program, nextA, depth + 1n);
+
+      // return result if/when valid value is found
+      if (result) { return result; }
+    }
+  }
+
+  return null;
+}
+
+export const part1 = function(input) {
+  const { registers, program } = parse(input);
+  console.log({ registers, program })
+  return run(registers, program).join(',');
 };
 
 export const part2 = function(input) {
-  return null;
+  const { registers, program } = parse(input);
+
+  const output = run(registers, program);
+  console.log({ output })
+  
+  return findMinimumA(output);
 };
