@@ -24,19 +24,28 @@ function parse(lines) {
 function run(registers, program) {
   const output = [];
   let pointer = 0n;
-  const combo = n => [0n, 1n, 2n, 3n, registers.A, registers.B, registers.C][n];
+  const combo = n => [0n, 1n, 2n, 3n, registers.A, registers.B, registers.C][Number(n)];
+  console.log(combo(0n));
+  console.log(combo(1n));
+  console.log(combo(2n));
+  console.log(combo(3n));
+  console.log(combo(4n));
+  console.log(combo(5n));
+  console.log(combo(6n));
+  console.log(combo(7n));
   const instructions = [
-    n => { registers.A = registers.A / 2n**combo(n);      pointer += 2n;  }, /* 0, adv */
-    n => { registers.B = n ^ registers.B;                 pointer += 2n;  }, /* 1, bxl */
-    n => { registers.B = combo(n) & 7n;                   pointer += 2n;  }, /* 2, bst */
-    n => { pointer = registers.A > 0n ? n : pointer + 2n;                 }, /* 3, jnz */
-   () => { registers.B = registers.B ^ registers.C;       pointer += 2n;  }, /* 4, bxc */
-    n => { output.push(combo(n) & 7n);                    pointer += 2n;  }, /* 5, out */
-    n => { registers.B = registers.A / 2n**combo(n);      pointer += 2n;  }, /* 6, bdv */
-    n => { registers.C = registers.A / 2n**combo(n);      pointer += 2n;  }, /* 7, cdv */
+    n => { console.log('(0) adv', {pointer, registers}, n, typeof n, '::'); registers.A = registers.A >> combo(n);      pointer += 2n;  }, /* 0, adv */
+    n => { console.log('(1) bxl', {pointer, registers}, n, typeof n, '::'); registers.B ^= n;                              pointer += 2n;  }, /* 1, bxl */
+    n => { console.log('(2) bst', {pointer, registers}, n, typeof n, '::'); registers.B = combo(n) & 7n;                   pointer += 2n;  }, /* 2, bst */
+    n => { console.log('(3) jnz', {pointer, registers}, n, typeof n, '::'); pointer = registers.A > 0n ? n : pointer + 2n;                 }, /* 3, jnz */
+   () => { console.log('4, bxc', {pointer, registers});                     registers.B ^= registers.C;                    pointer += 2n;  }, /* 4, bxc */
+    n => { console.log('(5) out', {pointer, registers}, n, typeof n, '::'); output.push(combo(n) & 7n);                    pointer += 2n;  }, /* 5, out */
+    n => { console.log('(6) bdv', {pointer, registers}, n, typeof n, '::'); registers.B = registers.A >> combo(n);      pointer += 2n;  }, /* 6, bdv */
+    n => { console.log('(7) cdv', {pointer, registers}, n, typeof n, '::'); registers.C = registers.A >> combo(n);      pointer += 2n;  }, /* 7, cdv */
   ];
 
   while (pointer < program.length) {
+    console.log(` - program[pointer] = program[${ pointer }] =`, program[pointer], typeof pointer, typeof program[pointer])
     instructions[program[pointer]](program[pointer + 1n]);
   }
 
@@ -80,3 +89,19 @@ export const part2 = function(input) {
   
   return findMinimumA(output);
 };
+
+
+  // const instructions = n => {
+  //   const functions = {
+  //     adv: () => registers.A = registers.A >> combo(n),
+  //     bxl: () => registers.B ^= n,
+  //     bst: () => registers.B = combo(n) & 7n,
+  //     jnz: () => pointer = registers.A > 0n ? n : pointer,
+  //     bxc: () => registers.B ^= registers.C,
+  //     out: () => output.push(combo(n) & 7n),
+  //     bdv: () => registers.B = registers.A >> combo(n),
+  //     cdv: () => registers.C = registers.A >> combo(n),
+  //   };
+  //   pointer += 2n;
+  //   return Object.keys(functions)[n];
+  // };
