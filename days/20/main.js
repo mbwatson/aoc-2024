@@ -83,28 +83,37 @@ function findPath({ height, width, start, end, walls = new Set() }) {
   return path;
 }
 
-function lookForCheats(height, width, walls, path) {
-  let cheats = [];
-  let distantNeighbor = { x: current.x + 2 * d.x, y: current.y + 2 * d.y };
-  if (valid(distantNeighbor)) {
-    cheats.push({ start: current, end: distantNeighbor });
-  }
+const dist = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 
-  return 0;
+function findCheats({ height, width, walls, path, radius = 1 }) {
+  const valid = ({ x, y }) => 0 <= x && x < width && 0 <= y < height && !walls.has(hash(x, y));
+  const visited = new Set();
+  const neighborhoods = path.reduce((acc, { x, y }) => {
+    const neighbors = path.filter(n => dist({ x, y }, n) === radius);
+    acc[hash(x, y)] = new Set(neighbors);
+    return acc;
+  }, { });
+  console.log(neighborhoods);
+  return Object.values(neighborhoods)
+    .reduce((cheatCount, { x, y, neighbors }) => {
+      console.log({ x, y, neighbors });
+      neighbors.forEach(nbr => {
+        const startIndex = path.findIndex(s => s.x === x && s.y === y);
+        const endIndex = path.findIndex(s => s.x === nbr.x && s.y === nbr.y);
+        const savings = endIndex - startIndex - 1;
+        if (savings >= 100) { cheatCount += 1; }
+      });
+      return cheatCount;
+    }, 0);
 }
 
 export const part1 = function(input) {
   const { start, end, walls, height, width } = survey(input);
   draw({ height, width, walls, start, end });
   const path = findPath({ height, width, start, end, walls });
-  // let cheatCount = 0;
-  // cheats.forEach(({ start, end }) => {
-  //   const startIndex = path.findIndex(s => s.x === start.x && s.y === start.y);
-  //   const endIndex = path.findIndex(s => s.x === end.x && s.y === end.y);
-  //   const savings = endIndex - startIndex - 1;
-  //   if (savings >= 100) { cheatCount += 1; }
-  // });
-  return path;
+  const cheats = findCheats({ height, width, walls, path });
+  console.log({cheats})
+  return 'path';
 };
 
 export const part2 = function(input) {
