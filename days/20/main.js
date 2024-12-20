@@ -66,7 +66,6 @@ function findPath({ height, width, start, end, walls = new Set() }) {
   const visited = new Set();
   let current = start;
   let path = [start];
-  let cheats = [];
 
   const valid = ({ x, y }) => 0 <= x && x < width && 0 <= y < height && !walls.has(hash(x, y)) && !visited.has(hash(x, y));
   while (hash(current.x, current.y) !== hash(end.x, end.y)) {
@@ -75,32 +74,37 @@ function findPath({ height, width, start, end, walls = new Set() }) {
       let neighbor = { x: current.x + d.x, y: current.y + d.y };
       if (valid(neighbor)) {
         acc.next = neighbor;
-      } else {
-        let distantNeighbor = { x: current.x + 2 * d.x, y: current.y + 2 * d.y };
-        if (valid(distantNeighbor)) {
-          cheats.push({ start: current, end: distantNeighbor });
-        }
       }
       return acc;
     }, { next: null });
     path.push(next);
     current = next;
   }
-  return { path, cheats };
+  return path;
+}
+
+function lookForCheats(height, width, walls, path) {
+  let cheats = [];
+  let distantNeighbor = { x: current.x + 2 * d.x, y: current.y + 2 * d.y };
+  if (valid(distantNeighbor)) {
+    cheats.push({ start: current, end: distantNeighbor });
+  }
+
+  return 0;
 }
 
 export const part1 = function(input) {
   const { start, end, walls, height, width } = survey(input);
   draw({ height, width, walls, start, end });
-  const { path, cheats } = findPath({ height, width, start, end, walls });
-  let cheatCount = 0;
-  cheats.forEach(({ start, end }) => {
-    const startIndex = path.findIndex(s => s.x === start.x && s.y === start.y);
-    const endIndex = path.findIndex(s => s.x === end.x && s.y === end.y);
-    const savings = endIndex - startIndex - 1;
-    if (savings >= 100) { cheatCount += 1; }
-  });
-  return cheatCount;
+  const path = findPath({ height, width, start, end, walls });
+  // let cheatCount = 0;
+  // cheats.forEach(({ start, end }) => {
+  //   const startIndex = path.findIndex(s => s.x === start.x && s.y === start.y);
+  //   const endIndex = path.findIndex(s => s.x === end.x && s.y === end.y);
+  //   const savings = endIndex - startIndex - 1;
+  //   if (savings >= 100) { cheatCount += 1; }
+  // });
+  return path;
 };
 
 export const part2 = function(input) {
