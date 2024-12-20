@@ -29,6 +29,41 @@ const dirs = [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 0, y: -1 }];
 function hash(...args) { return args.join(','); }
 function unhash(str) { return str.split(',').map(Number); }
 
+function countSteps(size, blockades) {
+  const visited = new Set();
+  const distances = new Map();
+  distances.set(hash(0, 0), 0);
+
+  function valid({ x, y }) {
+    const xyhash = hash(x, y);
+    return 0 <= x && x < size && 0 <= y && y < size
+      && !blockades.has(xyhash)
+      && !visited.has(xyhash);
+  }
+
+  const q = [];
+  q.push(hash(0, 0));
+  while (q.length > 0) {
+    const hsh = q.shift();
+    const [x, y] = unhash(hsh)
+    console.log({ x, y })
+    for (let d of dirs) {
+      const next = { x: x + d.x, y: y + d.y };
+      const nextHash = hash(next.x, next.y);
+      if (valid(next)) {
+        if (!q.includes(nextHash)) { q.push(nextHash); }
+        const newDist = distances.get(hsh) + 1;
+        if (newDist < distances.get(nextHash)) { distances.set(nextHash, newDist); }
+      }
+    }
+    visited.add(hash(x, y));
+    console.log({q})
+    console.log({distances})
+  }
+
+  return distances.get(hash(size - 1, size - 1));
+}
+
 function findPath(size, blockades, start = { x: 0, y: 0 }, end = { x: size - 1, y: size - 1 }) {
 
   if (blockades.has(hash(start.x, start.y)) || blockades.has(hash(end.x, end.y))) {
@@ -78,44 +113,45 @@ export const part1 = function(input) {
   let [size, byteCount] = TEST_MODE ? [7, 12] : [71, 1024];
   const locations = input.slice(0, byteCount);
 
-  const path = findPath(size, new Set(locations), { x: 0, y: 0 }, { x: size - 1, y: size - 1 });
-  console.log(path.length - 1);
+  const count = countSteps(size, new Set(locations), { x: 0, y: 0 }, { x: size - 1, y: size - 1 });
 
-  return input.slice(0, byteCount).reduce(({ dropped, path }, locHash, i) => {
-    let newPath = path;
-    process.stdout.write(`     ${ i + 1 } / ${ byteCount } (${ locHash }) `);
-    dropped.add(locations[i]);
-    let index = path.indexOf(locHash);
-    // if a byte drops somewhere off-path, our path is still good.
-    if (index > -1) {
-      // ...otherwise
-      process.stdout.write('\t ❌ hit. ')
-      draw(size, dropped, path);
-      // otherwise route around: find path from predecessor cell to the end
-      const [intx, inty] = unhash(path?.[index - 4] || path[index - 1]);
-      process.stdout.write(`recalculate paths START--(${intx},${inty}) and (${intx},${inty})--END `);
-      const head = findPath(size, dropped, { x: 0, y: 0 }, { x: intx, y: inty });
-      const tail = findPath(size, dropped, { x: intx, y: inty }, { x: size - 1, y: size - 1 });
-      // the two path parts may share squares
-      const commonSquares = [...head.filter(h => tail.indexOf(h) > -1)];
-      const headIndex = head.indexOf(commonSquares[0]);
-      const tailIndex = tail.lastIndexOf(commonSquares[0]);
-      console.log({ headIndex, tailIndex });
-      console.log('head', head.join(' -- '), `(${ headIndex })`);
-      console.log('tail', tail.join(' -- '), `(${ tailIndex })`);
-      // glue the earliest one in head to the latest in tail
-      newPath = [...head.slice(0, headIndex), ...tail.slice(tailIndex)];
-      console.log('   =', newPath.join(' -- '));
-      draw(size, dropped, newPath);
-    }
-    console.log();
-    return { dropped, path: newPath };
-  }, {
-    dropped: new Set(),
-    path: findPath(size, new Set(), { x: 0, y: 0 }, { x: size - 1, y: size - 1 }),
-  }).path.length - 1;
+  return count;
 };
 
 export const part2 = function(input) {
   return null;
 };
+
+// input.slice(0, byteCount).reduce(({ dropped, path }, locHash, i) => {
+//     let newPath = path;
+//     process.stdout.write(`     ${ i + 1 } / ${ byteCount } (${ locHash }) `);
+//     dropped.add(locations[i]);
+//     let index = path.indexOf(locHash);
+//     // if a byte drops somewhere off-path, our path is still good.
+//     if (index > -1) {
+//       // ...otherwise
+//       process.stdout.write('\t ❌ hit. ')
+//       draw(size, dropped, path);
+//       // otherwise route around: find path from predecessor cell to the end
+//       const [intx, inty] = unhash(path?.[index - 4] || path[index - 1]);
+//       process.stdout.write(`recalculate paths START--(${intx},${inty}) and (${intx},${inty})--END `);
+//       const head = findPath(size, dropped, { x: 0, y: 0 }, { x: intx, y: inty });
+//       const tail = findPath(size, dropped, { x: intx, y: inty }, { x: size - 1, y: size - 1 });
+//       // the two path parts may share squares
+//       const commonSquares = [...head.filter(h => tail.indexOf(h) > -1)];
+//       const headIndex = head.indexOf(commonSquares[0]);
+//       const tailIndex = tail.lastIndexOf(commonSquares[0]);
+//       console.log({ headIndex, tailIndex });
+//       console.log('head', head.join(' -- '), `(${ headIndex })`);
+//       console.log('tail', tail.join(' -- '), `(${ tailIndex })`);
+//       // glue the earliest one in head to the latest in tail
+//       newPath = [...head.slice(0, headIndex), ...tail.slice(tailIndex)];
+//       console.log('   =', newPath.join(' -- '));
+//       draw(size, dropped, newPath);
+//     }
+//     console.log();
+//     return { dropped, path: newPath };
+//   }, {
+//     dropped: new Set(),
+//     path: findPath(size, new Set(), { x: 0, y: 0 }, { x: size - 1, y: size - 1 }),
+//   }).path.length - 1;
