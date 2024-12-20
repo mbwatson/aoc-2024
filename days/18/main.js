@@ -3,6 +3,7 @@
 */
 
 import { TEST_MODE } from '../../solve.js';
+import memoize from 'util/memo.mjs';
 
 function draw(size, blockades, path = []) {
   console.log();
@@ -14,8 +15,8 @@ function draw(size, blockades, path = []) {
     process.stdout.write(`${ String(y).padStart(digitsRequired, '0') } `);
     for (let x = 0; x < size; x += 1) {
       process.stdout.write(
-        blockades.has(hash(x, y)) ? '# '
-          : path.includes(hash(x, y)) ? '0 ' : '. '
+        blockades.has(hash(x, y)) ? '🮕 '
+          : path.includes(hash(x, y)) ? '🯇 ' : '. '
         );
     }
     console.log();
@@ -28,8 +29,7 @@ const dirs = [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 0, y: -1 }];
 function hash(...args) { return args.join(','); }
 function unhash(str) { return str.split(',').map(Number); }
 
-function findPath(size, start = { x: 0, y: 0 }, blockades) {
-  const end = { x: size - 1, y: size - 1 };
+function findPath(size, blockades, start = { x: 0, y: 0 }, end = { x: size - 1, y: size - 1 }) {
 
   if (blockades.has(hash(start.x, start.y)) || blockades.has(hash(end.x, end.y))) {
     return null;
@@ -44,7 +44,7 @@ function findPath(size, start = { x: 0, y: 0 }, blockades) {
     return 0 <= x && x < size && 0 <= y && y < size && !blockades.has(hash(x, y)) && !visited[x][y];
   }
 
-  function backtrack({ x, y }) {
+  const backtrack = function({ x, y }) {
     if (x === end.x && y === end.y) {
       path.push(hash(x, y));
       return true;
@@ -65,7 +65,7 @@ function findPath(size, start = { x: 0, y: 0 }, blockades) {
     path.pop();
     visited[x][y] = false;
     return false;
-  }
+  };
 
   if (backtrack(start)) {
     return path;
@@ -76,54 +76,46 @@ function findPath(size, start = { x: 0, y: 0 }, blockades) {
 
 export const part1 = function(input) {
   let [size, byteCount] = TEST_MODE ? [7, 12] : [71, 1024];
-
   const locations = input.slice(0, byteCount);
 
-  return input.slice(0, byteCount).reduce(({ dropped, path }, loc, i) => {
+  const path = findPath(size, new Set(locations), { x: 0, y: 0 }, { x: size - 1, y: size - 1 });
+  console.log(path.length - 1);
+
+  return input.slice(0, byteCount).reduce(({ dropped, path }, locHash, i) => {
     let newPath = path;
-    process.stdout.write(`${ i + 1 } / ${ byteCount }\t\t(${ loc })\t`);
-    // draw(size, dropped, path);
+    process.stdout.write(`     ${ i + 1 } / ${ byteCount } (${ locHash }) `);
     dropped.add(locations[i]);
-    let index = path.indexOf(loc);
-    // if a byte drops somewhere off-path, it's still a good path.
+    let index = path.indexOf(locHash);
+    // if a byte drops somewhere off-path, our path is still good.
     if (index > -1) {
-      process.stdout.write('✔')
+      // ...otherwise
+      process.stdout.write('\t ❌ hit. ')
+      draw(size, dropped, path);
       // otherwise route around: find path from predecessor cell to the end
-      const [intx, inty] = unhash(path[index - 1]);
-      const pathAround = findPath(size, { x: intx, y: inty }, dropped);
-      newPath = [...path.slice(0, index-1), ...pathAround];
+      const [intx, inty] = unhash(path?.[index - 4] || path[index - 1]);
+      process.stdout.write(`recalculate paths START--(${intx},${inty}) and (${intx},${inty})--END `);
+      const head = findPath(size, dropped, { x: 0, y: 0 }, { x: intx, y: inty });
+      const tail = findPath(size, dropped, { x: intx, y: inty }, { x: size - 1, y: size - 1 });
+      // the two path parts may share squares
+      const commonSquares = [...head.filter(h => tail.indexOf(h) > -1)];
+      const headIndex = head.indexOf(commonSquares[0]);
+      const tailIndex = tail.lastIndexOf(commonSquares[0]);
+      console.log({ headIndex, tailIndex });
+      console.log('head', head.join(' -- '), `(${ headIndex })`);
+      console.log('tail', tail.join(' -- '), `(${ tailIndex })`);
+      // glue the earliest one in head to the latest in tail
+      newPath = [...head.slice(0, headIndex), ...tail.slice(tailIndex)];
+      console.log('   =', newPath.join(' -- '));
+      draw(size, dropped, newPath);
     }
-    console.log()
-    console.log(newPath)
-    draw(size, dropped, newPath);
+    console.log();
     return { dropped, path: newPath };
   }, {
     dropped: new Set(),
-    path: findPath(size, { x: 0, y: 0 }, new Set()),
+    path: findPath(size, new Set(), { x: 0, y: 0 }, { x: size - 1, y: size - 1 }),
   }).path.length - 1;
 };
 
 export const part2 = function(input) {
   return null;
 };
-
-  // draw(size, locations.slice(0, byteCount));
-  // draw(size, locations.slice(0, byteCount), p);
-  // console.log(p)
-
-    // // if new location landed on our existing path, we
-    // // find the shortest path from the cell before it
-    // // to end and glue them together.
-    // let index = path.indexOf(loc);
-    // console.log({ index })
-    // if (index === -1) {
-    //   return { locations, path };
-    // }
-    // // it blocks our path. remove the overlapping cell,
-    // // and everything after it, replace with path around.
-    // console.log(loc, path[index - 1]);
-    // const [intx, inty] = unhash(path[index - 1]);
-    // const newTail = findPath(size, { x: intx, y: inty }, new Set());
-    // // const newPath = [...path.slice(0, index), ...newTail];
-
-    // console.log('- - - - - - - - -');
