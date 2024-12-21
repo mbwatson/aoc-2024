@@ -85,17 +85,20 @@ function findPath({ height, width, start, end, walls = new Set() }) {
 
 const dist = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 
-function findCheats({ height, width, walls, path, radius = 1 }) {
+function countCheats({ height, width, walls, path, radius = 1 }) {
   const valid = ({ x, y }) => 0 <= x && x < width && 0 <= y < height && !walls.has(hash(x, y));
-  const visited = new Set();
-  const neighborhoods = path.reduce((acc, { x, y }) => {
-    const neighbors = path.filter(n => dist({ x, y }, n) === radius);
-    acc[hash(x, y)] = new Set(neighbors);
-    return acc;
-  }, { });
-  console.log(neighborhoods);
-  return Object.values(neighborhoods)
+  const neighborhoods = path.slice(0, -1)
+    .reduce((acc, { x, y }, i) => {
+      acc.push({
+        x, y,
+        neighbors: path.slice(i + 1).filter(nbr => dist({ x, y }, nbr) <= radius),
+      });
+      return acc;
+    }, []);
+
+  const cheats = neighborhoods
     .reduce((cheatCount, { x, y, neighbors }) => {
+      if (!neighbors) { return cheatCount; }
       console.log({ x, y, neighbors });
       neighbors.forEach(nbr => {
         const startIndex = path.findIndex(s => s.x === x && s.y === y);
@@ -105,15 +108,17 @@ function findCheats({ height, width, walls, path, radius = 1 }) {
       });
       return cheatCount;
     }, 0);
+  console.log({ cheats })
+
+  return 'tbd';
 }
 
 export const part1 = function(input) {
   const { start, end, walls, height, width } = survey(input);
   draw({ height, width, walls, start, end });
   const path = findPath({ height, width, start, end, walls });
-  const cheats = findCheats({ height, width, walls, path });
-  console.log({cheats})
-  return 'path';
+  const cheatCount = countCheats({ height, width, walls, path, radius: 2 });
+  return cheatCount;
 };
 
 export const part2 = function(input) {
