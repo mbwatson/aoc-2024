@@ -1,86 +1,86 @@
 /*
   --- Day 23: LAN Party ---
+
+  part1: 44.051ms
+  part2: 612.934ms
+  Solutions: { part1: 1064, part2: 'aq,cc,ea,gc,jo,od,pa,rg,rv,ub,ul,vr,yy' }
+
 */
 
-function hash(i, j) { return `${ i },${ j }`; }
-function unhash(str) { return str.split(',').map(Number); }
-
-class AdjacencyMatrix {
-  constructor() {
-    this.matrix = new Map();
+function findThreeCycles(edges) {
+  // build adjacency map
+  const adj = new Map();
+  for (const [u, v] of edges) {
+    if (!adj.has(u)) adj.set(u, new Set());
+    if (!adj.has(v)) adj.set(v, new Set());
+    adj.get(u).add(v);
+    adj.get(v).add(u);
   }
 
-  // Add a node
-  addNode(key) {
-    if (!this.matrix.has(key)) {
-      this.matrix.set(key, new Map());
+  const cycles = new Set();
+
+  // iterate through edges
+  for (const [u, v] of edges) {
+    if (!adj.has(u) || !adj.has(v)) continue;
+
+    // find common neighbors of u and v
+    for (const neighbor of adj.get(u)) {
+      if (neighbor !== v && adj.get(v).has(neighbor)) {
+        // ensure uniqueness via sorting
+        const cycle = [u, v, neighbor].sort();
+        cycles.add(cycle.join(','));
+      }
     }
   }
 
-  // Add an edge with a weight (default weight is 1)
-  addEdge(from, to, weight = 1) {
-    this.addNode(from);
-    this.addNode(to);
-    this.matrix.get(from).set(to, weight);
-    this.matrix.get(to).set(from, weight); // Add reverse edge
-  }
-  // Get the weight of an edge
-  getEdge(from, to) {
-    return this.matrix?.get(from)?.get(to) ?? 0; // Returns 0 if no edge exists
+  return [...cycles].map(s => s.split(','));
+}
+
+function findMaxClique(edges) {
+  // build adjacency map. copied from other func. todo: refactor to do this only once
+  const adj = new Map();
+  for (const [u, v] of edges) {
+    if (!adj.has(u)) adj.set(u, new Set());
+    if (!adj.has(v)) adj.set(v, new Set());
+    adj.get(u).add(v);
+    adj.get(v).add(u);
   }
 
-  // Remove an edge
-  removeEdge(from, to) {
-    this.matrix.get(from)?.delete(to);
-    this.matrix.get(to)?.delete(from); // Remove reverse edge
+  const nodes = [...adj.keys()];
+  let maxClique = [];
+
+  function backtrack(current, start) {
+    // found a longer one
+    if (current.length > maxClique.length) {
+      maxClique = [...current];
+    }
+    for (let i = start; i < nodes.length; i++) {
+      const node = nodes[i];
+      if (current.every(nbr => adj.get(nbr).has(node))) {
+        current.push(node);
+        backtrack(current, i + 1);
+        current.pop();
+      }
+    }
   }
 
-  // Check if a node exists
-  hasNode(key) {
-    return this.matrix.has(key);
-  }
-
-  // Check if an edge exists
-  hasEdge(from, to) {
-    return (this.matrix.get(from)?.has(to) || this.matrix.get(to)?.has(from)) ?? false;
-  }
-
-  // Get all nodes
-  getNodes() {
-    return Array.from(this.matrix.keys());
-  }
-
-  // Get all neighbors of a node
-  getNeighbors(key) {
-    return this.matrix.get(key) ? Array.from(this.matrix.get(key).keys()) : [];
-  }
-
-  getCycles() {
-    const nodes = this.getNodes();
-    nodes.forEach(node => {
-      const nbrs = this.getNeighbors(node);
-
-    });
-    return [];
-  }
+  backtrack([], 0);
+  return maxClique;
 }
 
 export const part1 = function(input) {
-  const g = new AdjacencyMatrix();
+  const edges = input.map(line => line.split('-'));
 
-  input.forEach(line => {
-    const [a, b] = line.split('-').sort();
-    g.addEdge(a, b);
-  });
-  console.log(g);
+  const threeCycles = findThreeCycles(edges)
+    .filter(([a, b, c]) => {
+      return a.startsWith('t') || b.startsWith('t') || c.startsWith('t');
+    }).map(a => a.join('--'));
 
-  for (let node of g.getNodes().filter(n => n.includes('t'))) {
-    console.log(node, g.getNeighbors(node));
-  }
-
-  return null;
+  return threeCycles.length;
 };
 
 export const part2 = function(input) {
-  return null;
+  const edges = input.map(line => line.split('-'));
+  const c = findMaxClique(edges);
+  return c.sort().join(',');
 };
