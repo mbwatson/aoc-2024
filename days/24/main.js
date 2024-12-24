@@ -67,14 +67,27 @@ export const part1 = function(input) {
 
 export const part2 = function(input) {
   const { valueOf, wires, connections } = new Circuit(input);
-  // const { X, Y } = [...wires.entries()]
-  //   .reduce(({ X, Y }, [wire, value]) => {
-  //     console.log(wire, value);
-  //     if (wire.startsWith('x')) { X = `${ value }${ X }`; }
-  //     if (wire.startsWith('y')) { Y = `${ value }${ Y }`; }
-  //     return { X, Y };
-  //   }, { X: '', Y: '' });
-  // console.log({ X, Y });
+  const { x, y } = [...wires.entries()]
+    .reduce(({ x, y }, [wire, value]) => {
+      console.log(wire, value);
+      if (wire.startsWith('x')) { x = `${ value }${ x }`; }
+      else if (wire.startsWith('y')) { y = `${ value }${ y }`; }
+      return { x, y };
+    }, { x: '', y: '' });
+  const result = Object.keys(connections)
+    .filter(wire => wire.startsWith('z'))
+    .sort()
+    .reduce((acc, wire) => `${ valueOf(wire) }${ acc }`, '')
+  console.log({
+    x_bin: x,
+    y_bin: y,
+    correct_bin: (parseInt(x, 2) + parseInt(y, 2)).toString(2),
+    actual_bin: result,
+    x: parseInt(x, 2),
+    y: parseInt(y, 2),
+    correct: parseInt(x, 2) + parseInt(y, 2),
+    actual: parseInt(result, 2),
+  });
 
   return null;
 };
