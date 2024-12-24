@@ -3,100 +3,99 @@
 */
 
 function hash(i, j) { return `${ i },${ j }`; }
-function unhash(str) { return str.split(',').map(Number); }
 
-function parse(lines) {
-  const height = lines.length,
-        width = lines[0].length;
-  return lines.reduce((acc, line, y) => {
-    for (let x = 0; x < width; x += 1) {
-      if (line[x] in acc) {
-        acc[line[x]].push({ x, y });
-      } else {
-        acc[line[x]] = [{ x, y }];
-      }
-    }
-    return acc;
-  }, { width, height, map: lines });
-};
-
-const dirs = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
-
-function cost(path) {
-  // probably could calculate this along the walk
-  let turnCount = 0;
-  let lastDir = null;
-  for (let i = 1; i < path.length - 1; i += 1) {
-    const { x, y } = path[i];
-    const { x: prevX, y: prevY } = path[i - 1];
-    const thisDir = hash(x - prevX, y - prevY);
-    if (thisDir !== lastDir) { turnCount += 1; }
-    lastDir = thisDir;
+class PriorityQueue {
+  constructor() {
+    this.items = [];
   }
-  return path.length - 1 + 1000 * turnCount;
+  enqueue(element, cost) {
+    this.items.push({ element, cost });
+    this.items.sort((a, b) => a.cost - b.cost);
+  }
+  dequeue() { return this.items.shift().element; }
+  isEmpty() { return this.items.length === 0; }
 }
 
-function findMinPath(maze) {
-  const start = maze.S?.[0];
-  if (!start) throw new Error('maze does not have a start "S".');
-  
-  const dirs = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
-  const { width, height, map } = maze;
-
-  const queue = [{ ...start, cost: 0, turns: 0 }];
-  const visited = Array.from({ length: height }, () => Array(width).fill(false));
-
-  function taxicab(x, y) {
-    const end = maze.E[0];
-    return Math.abs(end.x - x) + Math.abs(end.y - y);
-  }
-
-  function isValid({ x, y }) {
-    return (
-      0 <= x && x < width && 0 <= y && y < height
-      && (map[y][x] === '.' || map[y][x] === 'E')
-      && !visited[y][x]
+function drawMaze(grid) {
+  const digitsRequired = Math.ceil(Math.log(grid[0].length) / Math.log(10));
+  for (let i = 0; i < digitsRequired; i++) {
+    console.log(
+      Array(digitsRequired).fill(' ').join(''),
+      [...Array(grid.length).keys()].map(n => String(n).padStart(digitsRequired, '0')[i]).join('')
     );
   }
+  grid.forEach((l, i) => console.log(`${ String(i).padStart(digitsRequired, '0') } ${ l }`));
+};
 
-  let minCost = Infinity;
+const dirs = [{ x:  0, y:  1 }, { x:  1, y:  0 }, { x:  0, y: -1 }, { x: -1, y:  0 }];
 
-  while (queue.length) {
-    queue.sort((a, b) => (a.cost + taxicab(a.x, a.y)) - (b.cost + taxicab(b.x, b.y)));
-    const { x, y, cost, dir, path = [] } = queue.shift();
+function dirChar({ x, y }) {
+  if (hash(x, y) === `1,0`) { return `>`; }
+    else if (hash(x, y) === `-1,0`) { return `<`; }
+    else if (hash(x, y) === `0,1`) { return `v`; }
+    else if (hash(x, y) === `0,-1`) { return `^`; }
+    else return '?';
+}
 
-    const lastDir = path.length > 1 ? path[path.length - 2].dir : false;
-    const turning = lastDir && dir.x === lastDir.x && dir.y === lastDir.y;
+function findMinPath(grid, start, end) {
+  const [height, width] = [grid.length, grid[0].length];
 
-    if (map[y][x] === 'E') {
-      minCost = Math.min(minCost, turning ? cost + 1000 : cost);
-      continue;
+  const costs = Array.from({ length: height }, () => Array(width).fill(Infinity));
+  const sources = Array.from({ length: height }, () => Array(width).fill(null));
+  const pq = new PriorityQueue();
+  
+  costs[start.x][start.y] = 0;
+  pq.enqueue(start, 0);
+
+  while (!pq.isEmpty()) {
+    const current = pq.dequeue();
+
+    if (current.x === end.x && current.y === end.y) {
+      const reconstructed = [];
+      let { x, y } = end;
+      while (!!x && !!y) {
+        const source = sources[x][y];
+        const dx = (x - sources?.[x]?.[y]?.x) ?? null;
+        const dy = (y - sources?.[x]?.[y]?.y) ?? null;
+        reconstructed.unshift({ x, y, dx, dy });
+        x = source?.x;
+        y = source?.y;
+      }
+      reconstructed.forEach(p => {
+        console.log(p, sources[p.x][p.y])
+      })
+      return {
+        cost: costs[end.x][end.y],
+        path: reconstructed,
+      };
     }
 
-    visited[y][x] = true;
+    const source = sources[current?.x][current?.y] ?? { x: null, y: null };
 
-    for (const d of dirs) {
-      const next = { x: x + d.x, y: y + d.y };
-      if (isValid(next)) {
-        queue.push({
-          ...next,
-          cost: cost + 1 + 1000 * turning,
-          dir: d,
-          turn: turning,
-          path: [...path, next],
-        });
+    let lastDir;
+    for (let d of dirs) {
+      const next = { x: current.x + d.x, y: current.y + d.y, dir: dirChar(d) };
+      if (0 <= next.y && next.y < height && 0 <= next.x && next.x < width && grid[next.x][next.y] !== '#') {
+        const stepCost = next.dir === source.dir ? 1 : 1000;
+        const newCost = costs[current.x][current.y] + stepCost;
+        console.log({ current, next, stepCost, newCost })
+        if (newCost < costs[next.x][next.y]) {
+          costs[next.x][next.y] = newCost;
+          sources[next.x][next.y] = current;
+          pq.enqueue(next, newCost);
+        }
       }
     }
   }
 
-  return minCost;
+  return [];
 }
 
 export const part1 = function(input) {
-  const maze = parse(input);
-  const path = findMinPath(maze);
+  const path = findMinPath(input, { x: 1, y: 13 }, { x: 13, y: 1 });
   console.log(path);
-  return cost(path);
+  drawMaze(input, path);
+  return null;
 };
 
 export const part2 = function(input) {
