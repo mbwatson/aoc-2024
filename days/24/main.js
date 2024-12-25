@@ -39,7 +39,8 @@ function Circuit(input) {
     XOR: function xor(a, b) { return a ^ b; },
   };
 
-  function valueOf(wire) {
+  function valueOf(wire, d = 0) {
+    console.log(' -'.repeat(d), { wire })
     if (wires.has(wire)) { return wires.get(wire); }
 
     if (!(wire in connections)) {
@@ -48,7 +49,7 @@ function Circuit(input) {
     }
 
     const { gate, a, b } = connections[wire];
-    return op[gate](valueOf(a), valueOf(b));
+    return op[gate](valueOf(a, d+1), valueOf(b, d+1));
   }
 
   return { valueOf, wires, connections };
@@ -71,23 +72,32 @@ export const part2 = function(input) {
     .reduce(({ x, y }, [wire, value]) => {
       console.log(wire, value);
       if (wire.startsWith('x')) { x = `${ value }${ x }`; }
-      else if (wire.startsWith('y')) { y = `${ value }${ y }`; }
+        else if (wire.startsWith('y')) { y = `${ value }${ y }`; }
       return { x, y };
     }, { x: '', y: '' });
   const result = Object.keys(connections)
     .filter(wire => wire.startsWith('z'))
     .sort()
     .reduce((acc, wire) => `${ valueOf(wire) }${ acc }`, '')
-  console.log({
-    x_bin: x,
-    y_bin: y,
-    correct_bin: (parseInt(x, 2) + parseInt(y, 2)).toString(2),
-    actual_bin: result,
-    x: parseInt(x, 2),
-    y: parseInt(y, 2),
-    correct: parseInt(x, 2) + parseInt(y, 2),
-    actual: parseInt(result, 2),
-  });
+
+  const correct = parseInt(x, 2) + parseInt(y, 2);
+  // console.log({
+  //   x_bin: x,
+  //   y_bin: y,
+  //   correct_bin: (parseInt(x, 2) + parseInt(y, 2)).toString(2),
+  //   actual_bin: result,
+  //   x: parseInt(x, 2),
+  //   y: parseInt(y, 2),
+  //   correct: parseInt(x, 2) + parseInt(y, 2),
+  //   actual: parseInt(result, 2),
+  // });
+
+  console.log('\n' + '~ '.repeat(20) + '\n')
+  console.log({ correct })
+  console.log({ result })
+  const diff = (correct ^ result).toString(2).split('').reverse()
+    .reduce((acc, ch, i) => ch === '1' ? [...acc, i] : acc, []);
+  console.log({ diff })
 
   return null;
 };
