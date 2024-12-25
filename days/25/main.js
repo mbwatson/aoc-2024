@@ -10,29 +10,8 @@ function parse(lines) {
     return parseInt(bitstring, 2);
   });
 
-  const { schematics } = encoded
-    .reduce((acc, num, i) => {
-      if (isNaN(num)) {
-        acc.pointer++;
-        acc.schematics[acc.pointer] = [];
-      }
-      if (Number.isInteger(num)) {
-        acc.schematics[acc.pointer].push(num);
-      }
-      return acc;
-    }, { pointer: 0, schematics: { 0: [] } });
 
-  const { keys, locks } = Object.values(schematics)
-    .reduce((acc, s) => {
-      if (s[0] === 31) {
-        acc.locks.push(s);
-      } else if (s[0] === 0) {
-        acc.keys.push(s);
-      }
-      return acc;
-    }, { keys: [], locks: [] });
-
-  return { keys, locks };
+  return encoded;
 }
 
 function draw(schematic) {
